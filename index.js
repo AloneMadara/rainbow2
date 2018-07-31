@@ -127,7 +127,7 @@ client.on("message", async message => {
         message.channel.send({embed});
         message.delete();
     } catch(e) {
-        message.channel.send('Ошибка').then(msg => msg.delete(3000));
+   
         console.error(e);
     }
 });
