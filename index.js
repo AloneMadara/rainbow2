@@ -9,7 +9,7 @@ function color () {
    {
     setTimeout(function () {client.guilds.get('469080709403770883').roles.get('471056516796121088').setColor(item).catch();
     if(number === colors.length-1)
-    setTimeout(function () {color()}, 500)}, number*500);
+    setTimeout(function () {color()}, 2000)}, number*2000);
    }
  );
 };
