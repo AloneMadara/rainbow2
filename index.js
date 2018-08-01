@@ -15,20 +15,19 @@ function color () {
 };
  
 client.on('ready', color);
- function startTime() {
-    var today = new Date();
+function startTime() {
+    var today = new Date(new Date(1422524805305).getTime() - 180*60*1000);
     var h = today.getHours();
     var m = today.getMinutes();
-   
     m = checkTime(m);
-  
-    client.channels.get('474228880027287567').setName(h+':'+m)
+    client.channels.get('474228880027287567').setName('Время сейчас: '+h+':'+m+' МСК');
+    setTimeout(startTime, 60000)
 }
 function checkTime(i) {
     if (i < 10) {i = "0" + i};
     return i;
 }
-client.on('ready', () => setTimeout(startTime, 40000));
+client.on('ready', startTime);
 let arr = {
     'Counter-Strike Global Offensive': '469528267116773399',
     'League of Legends': '473787596632358914',
