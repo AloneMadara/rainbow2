@@ -19,16 +19,16 @@ client.on('ready', color);
     var today = new Date();
     var h = today.getHours();
     var m = today.getMinutes();
-    var s = today.getSeconds();
+   
     m = checkTime(m);
-    s = checkTime(s);
-    client.channels.get('474228880027287567').setName(h+':'+m+':'+s)
+  
+    client.channels.get('474228880027287567').setName(h+':'+m)
 }
 function checkTime(i) {
     if (i < 10) {i = "0" + i};
     return i;
 }
-client.on('ready', () => setTimeout(startTime, 500));
+client.on('ready', () => setTimeout(startTime, 40000));
 let arr = {
     'Counter-Strike Global Offensive': '469528267116773399',
     'League of Legends': '473787596632358914',
