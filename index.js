@@ -16,7 +16,7 @@ function color () {
  
 client.on('ready', color);
 function startTime() {
-    var today = new Date(new Date(1422524805305).getTime() - 180*60*1000);
+    var today = new Date(new Date().getTime() + 3*60*60*1000);
     var h = today.getHours();
     var m = today.getMinutes();
     m = checkTime(m);
