@@ -106,7 +106,7 @@ client.on("message", async message => {
     const args = message.content.slice(prefix.length).trim().split(/ +/g);
     const command = args.shift().toLowerCase();
 
-    if (command === 'd2bf') {
+     if (command === 'd2bf') {
         const playerId = args[0]
 
         getD2BuffInfo(playerId).then(profile => {
@@ -122,7 +122,7 @@ client.on("message", async message => {
               .setURL(profile.URL)
               .setThumbnail(profile.rankLogo)
               .setImage(profile.avatar)
-              .addField('Ранк', profile.rank)
+              .addField('Ранк', (profile.rank === '') ? 'Отсутствует' : profile.rank)
               .addField('Одиночный MMR', profile.rate.single)
               .addField('Групповой MMR', profile.rate.group)
               .addBlankField(true)
@@ -135,8 +135,7 @@ client.on("message", async message => {
             return message.channel.send(response)
         })
     }
- 
-    if (command === 'embed' && message.author.id === '462996610146893824') {
+  if (command === 'embed' && message.author.id === '462996610146893824') {
         try {
             let text = args.join(" ").replace(/\n/g, "\\n");
             let embed = new Discord.RichEmbed();
