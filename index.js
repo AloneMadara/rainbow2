@@ -106,7 +106,7 @@ client.on("message", async message => {
     const args = message.content.slice(prefix.length).trim().split(/ +/g);
     const command = args.shift().toLowerCase();
 
-     if (command === 'd2bf') {
+        if (command === 'd2bf') {
         const playerId = args[0]
 
         getD2BuffInfo(playerId).then(profile => {
@@ -122,15 +122,19 @@ client.on("message", async message => {
               .setURL(profile.URL)
               .setThumbnail(profile.rankLogo)
               .setImage(profile.avatar)
-              .addField('Ранк', (profile.rank === '') ? 'Отсутствует' : profile.rank)
-              .addField('Одиночный MMR', profile.rate.single)
-              .addField('Групповой MMR', profile.rate.group)
-              .addBlankField(true)
-              .addField('Доля побед', profile.matches.winRate)
-              .addField('Выигранных матчей', profile.matches.wins)
-              .addField('Проигранных матчей', profile.matches.losses)
-              .addField('Последние матчи', profile.lastResults)
-              .addField('Последняя игра была', profile.lastgame)
+              .addField('Ранк', (profile.rank) ? 'Отсутствует' : profile.rank)
+
+              if (profile.rate.single) response.addField('Одиночный MMR', profile.rate.single)
+              if (profile.rate.group) response.addField('Групповой MMR', profile.rate.group)
+              
+              response.addBlankField(true)
+
+              if (profile.matches.winRate) response.addField('Доля побед', profile.matches.winRate)
+              if (profile.matches.wins) response.addField('Выигранных матчей', profile.matches.wins)
+              if (profile.matches.losses) response.addField('Проигранных матчей', profile.matches.losses)
+
+              if (profile.lastResults) response.addField('Последние матчи', profile.lastResults)
+              if (profile.lastgame) response.addField('Последняя игра была', profile.lastgame)
               
             return message.channel.send(response)
         })
