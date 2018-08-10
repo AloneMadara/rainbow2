@@ -112,6 +112,8 @@ client.on("message", async message => {
         getD2BuffInfo(playerId).then(profile => {
             if (!profile) return
 
+            console.log(profile)
+
             const response = new Discord.RichEmbed()
 
             response.setColor('#009dd0')
