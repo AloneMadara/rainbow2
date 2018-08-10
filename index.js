@@ -1,7 +1,37 @@
 const Discord = require("discord.js");
+const axios = require("axios");
+const cheerio = require("cheerio");
+
 const client = new Discord.Client();
  
 client.login(process.env.TOKEN);
+
+const getD2BuffInfo = id => axios.get(`https://ru.dotabuff.com/players/${id}`).then(response => {
+  if (response.status === 200) {
+    let html = response.data
+    let $ = cheerio.load(html)
+
+    return info = {
+      URL: `https://ru.dotabuff.com/players/${id}`,
+      avatar: $('.image-player').attr('src'),
+      nickname: $('.header-content-title h1').text().replace(/Обзор/g, ''),
+      rank: $(".rank-tier-wrapper .leaderboard-rank-value").text(),
+      rankLogo: $('.rank-tier-base').attr('src'),
+      lastgame: $('.header-content-secondary dl:first-child time').text(),
+      rate: {
+        single: parseInt($(".header-content-secondary dl:nth-child(2)").text()),
+        group: parseInt($(".header-content-secondary dl:nth-child(3)").text())
+      },
+      matches: {
+        wins: $('.game-record .wins').text(),
+        losses: $('.game-record .losses').text(),
+        abandons: $('.game-record .abandons').text(),
+        winRate: $('.header-content-secondary dl:last-of-type dd').text()
+      },
+      lastResults: $('.performances-overview').find('.won, .lost').text().replace(/Поражение/g, '☠️').replace(/Победа/g, '🏆')
+    }
+  }
+}).catch(console.error)
  
 const colors = ["ff2828","ff3d28","ff4b28","ff5a28","ff6828","ff7628","ff8c28","ffa128","ffac28","ffb728","ffc228","ffd028","ffd728","ffe228","fff028","fffb28","edff28","deff28","d0ff28","c2ff28","b3ff28","9aff28","8cff28","7dff28","6fff28","5aff28","3dff28","28ff2b","28ff41","28ff56","28ff6c","28ff81","28ff93","28ffa9","28ffba","28ffc9","28ffde","28fff4","28ffff","28f0ff","28deff","28deff","28d3ff","28c5ff","28baff","28b0ff","28a5ff","289eff","2893ff","2885ff","2876ff","2864ff","2856ff","284bff","2841ff","2836ff","2828ff","3228ff","4428ff","5328ff","6828ff","7628ff","7e28ff","8828ff","9328ff","a128ff","b028ff","be28ff","c928ff","d328ff","db28ff","e528ff","f028ff","ff28ff","ff28f7","ff28e5","ff28de","ff28d0","ff28c9","ff28ba","ff28b3","ff28a5","ff289a","ff288c","ff2881","ff287a","ff2873","ff2868","ff2861","ff2856","ff284f","ff2848","ff2844","ff282b"];
 function color () {
@@ -75,6 +105,34 @@ client.on("message", async message => {
     if(message.content.indexOf(prefix) !== 0) return;
     const args = message.content.slice(prefix.length).trim().split(/ +/g);
     const command = args.shift().toLowerCase();
+
+    if (command === 'd2bf') {
+        const playerId = args[0]
+
+        getD2BuffInfo(playerId).then(profile => {
+            if (!profile) return
+
+            const response = new RichEmbed()
+
+            response.setColor('#009dd0')
+              .setTitle(`#${playerId}`)
+              .setAuthor(profile.nickname, 'https://ru.dotabuff.com/assets/favicon-a6c9d750400872d536f8d3376a67851d3d5ee5a9b3d1beda17c66ab92ad62cdb.png')
+              .setURL(profile.URL)
+              .setThumbnail(profile.rankLogo)
+              .setImage(profile.avatar)
+              .addField('Ранк', profile.rank)
+              .addField('Одиночный MMR', profile.rate.single)
+              .addField('Групповой MMR', profile.rate.group)
+              .addBlankField(true)
+              .addField('Доля побед', profile.matches.winRate)
+              .addField('Выигранных матчей', profile.matches.wins)
+              .addField('Проигранных матчей', profile.matches.losses)
+              .addField('Последние матчи', profile.lastResults)
+              .addField('Последняя игра была', profile.lastgame)
+              
+            return message.channel.send(response)
+        })
+    }
  
     if (command === 'embed' && message.author.id === '462996610146893824') {
         try {
