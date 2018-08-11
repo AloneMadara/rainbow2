@@ -59,7 +59,7 @@ function checkTime(i) {
 }
 client.on('ready', startTime);
 let arr = {
-    'Counter-Strike Global Offensive': '469528267116773399',
+    'Counter-Strike: Global Offensive': '469528267116773399',
     'League of Legends': '473787596632358914',
     'Overwatch': '469473209155059723',
     'Fortnite': '469473210585317386',
