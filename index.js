@@ -3,6 +3,7 @@ const axios = require('axios')
 const cheerio = require('cheerio')
 
 const bot = new Client()
+const PREFIX = '1!'
 
 let selfChannels = []
 
@@ -171,9 +172,9 @@ bot.on('voiceStateUpdate', (oldUser, newUser) => {
 
 bot.on('message', message => {
     if(message.author.bot) return
-    if(message.content.indexOf(prefix) !== 0) return
+    if(message.content.indexOf(PREFIX) !== 0) return
 
-    const args = message.content.slice(prefix.length).trim().split(/ +/g)
+    const args = message.content.slice(PREFIX.length).trim().split(/ +/g)
     const command = args.shift().toLowerCase()
 
     if (command === 'd2bf') {
@@ -183,8 +184,6 @@ bot.on('message', message => {
 
         getD2BuffInfo(playerId).then(profile => {
             if (!profile) return
-
-            console.log(profile)
 
             const response = new RichEmbed()
 
