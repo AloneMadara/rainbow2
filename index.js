@@ -107,7 +107,7 @@ bot.on('guildMemberUpdate', (oldMember, newMember) => {
 })
 
 bot.on('userUpdate', (oldUser, newUser) => {
-    const member = client.guilds.get('469080709403770883').members.get(newUser.id)
+    const member = bot.guilds.get('469080709403770883').members.get(newUser.id)
     const name = member.displayName
     
     if (name.startsWith('!')) {
