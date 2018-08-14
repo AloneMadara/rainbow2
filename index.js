@@ -43,13 +43,12 @@ setInterval(() => {
 
   usersInVoice.forEach(user => {
     if (timeInVoice[user] && timeInVoice[user] > 0) {
-      users.findOne({
-        raw: true,
+      users.findOrCreate({
         where: {
           id: user
         }
       })
-        .then(info => {
+        .spread(info => {
           if (!info) return
 
           const set = info.online + timeInVoice[user]
@@ -69,7 +68,7 @@ setInterval(() => {
         .catch(console.error)
     }
   })
-}, 30000)
+}, 31000)
 
 const pad = n => (n < 10) ? '0' + n : n
 
@@ -277,7 +276,7 @@ bot.on('message', message => {
   const args = message.content.slice(PREFIX.length).trim().split(/ +/g)
   const command = args.shift().toLowerCase()
 
-  if (command === 'онлайн') {
+  if (command === 'online') {
     message.delete()
 
     const channel = message.channel
@@ -300,7 +299,7 @@ bot.on('message', message => {
           .setThumbnail(member.user.displayAvatarURL)
           .addField('Голосовой онлайн', `${time.h}:${time.m}:${time.s}`)
 
-        return channel.send(notify)
+        return channel.send(notify).then(msg => msg.delete(15000))
       })
       .catch(console.error)
   }
