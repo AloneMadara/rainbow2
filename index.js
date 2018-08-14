@@ -1,65 +1,13 @@
-const Discord = require("discord.js");
-const axios = require("axios");
-const cheerio = require("cheerio");
+const { Client, RichEmbed } = require('discord.js')
+const axios = require('axios')
+const cheerio = require('cheerio')
 
-const client = new Discord.Client();
- 
-client.login(process.env.TOKEN);
+const bot = new Client()
 
-const getD2BuffInfo = id => axios.get(`https://ru.dotabuff.com/players/${id}`).then(response => {
-  if (response.status === 200) {
-    let html = response.data
-    let $ = cheerio.load(html)
+let selfChannels = []
 
-    return info = {
-      URL: `https://ru.dotabuff.com/players/${id}`,
-      avatar: $('.image-player').attr('src'),
-      nickname: $('.header-content-title h1').text().replace(/Обзор/g, ''),
-      rank: $(".rank-tier-wrapper .leaderboard-rank-value").text(),
-      rankLogo: $('.rank-tier-base').attr('src'),
-      lastgame: $('.header-content-secondary dl:first-child time').text(),
-      rate: {
-        single: parseInt($(".header-content-secondary dl:nth-child(2)").text()),
-        group: parseInt($(".header-content-secondary dl:nth-child(3)").text())
-      },
-      matches: {
-        wins: $('.game-record .wins').text(),
-        losses: $('.game-record .losses').text(),
-        abandons: $('.game-record .abandons').text(),
-        winRate: $('.header-content-secondary dl:last-of-type dd').text()
-      },
-      lastResults: $('.performances-overview').find('.won, .lost').text().replace(/Поражение/g, '☠️').replace(/Победа/g, '🏆')
-    }
-  }
-}).catch(console.error)
- 
-const colors = ["ff2828","ff3d28","ff4b28","ff5a28","ff6828","ff7628","ff8c28","ffa128","ffac28","ffb728","ffc228","ffd028","ffd728","ffe228","fff028","fffb28","edff28","deff28","d0ff28","c2ff28","b3ff28","9aff28","8cff28","7dff28","6fff28","5aff28","3dff28","28ff2b","28ff41","28ff56","28ff6c","28ff81","28ff93","28ffa9","28ffba","28ffc9","28ffde","28fff4","28ffff","28f0ff","28deff","28deff","28d3ff","28c5ff","28baff","28b0ff","28a5ff","289eff","2893ff","2885ff","2876ff","2864ff","2856ff","284bff","2841ff","2836ff","2828ff","3228ff","4428ff","5328ff","6828ff","7628ff","7e28ff","8828ff","9328ff","a128ff","b028ff","be28ff","c928ff","d328ff","db28ff","e528ff","f028ff","ff28ff","ff28f7","ff28e5","ff28de","ff28d0","ff28c9","ff28ba","ff28b3","ff28a5","ff289a","ff288c","ff2881","ff287a","ff2873","ff2868","ff2861","ff2856","ff284f","ff2848","ff2844","ff282b"];
-function color () {
-    colors.forEach(function (item, number)
-   {
-    setTimeout(function () {client.guilds.get('469080709403770883').roles.get('471056516796121088').setColor(item).catch();
-    if(number === colors.length-1)
-    setTimeout(function () {color()}, 600000)}, number*600000);
-   }
- );
-};
- 
-client.on('ready', color);
-function startTime() {
-    var today = new Date(new Date().getTime() + 3*60*60*1000);
-    var h = today.getHours();
-    var m = today.getMinutes();
-    m = checkTime(m);
-    client.channels.get('474228880027287567').setName('Время сейчас: '+h+':'+m+' МСК');
-    setTimeout(startTime, 60000)
-}
-function checkTime(i) {
-    if (i < 10) {i = "0" + i};
-    return i;
-}
-client.on('ready', startTime);
-let arr = {
-    'Counter-Strike: Global Offensive': '469528267116773399',
+const gameRoles = {
+    'Counter-Strike Global Offensive': '469528267116773399',
     'League of Legends': '473787596632358914',
     'Overwatch': '469473209155059723',
     'Fortnite': '469473210585317386',
@@ -70,43 +18,167 @@ let arr = {
     'Warframe': '473790116465344514',
     'PLAYERUNKNOWN\'S BATTLEGROUNDS': '469473441091813376',
     'Rainbow Six Siege': '469472498749014037',
-};
+}
+
+const pad = n => (n < 10) ? '0' + n : n
+
+const getD2BuffInfo = id => axios.get(`https://ru.dotabuff.com/players/${id}`).then(response => {
+  if (response.status === 200) {
+    let html = response.data
+    let $ = cheerio.load(html)
+
+    return info = {
+      URL: `https://ru.dotabuff.com/players/${id}`,
+      avatar: $('.image-player').attr('src'),
+      nickname: $('.header-content-title h1').text().replace(/Обзор/g, ''),
+      rank: $('.rank-tier-wrapper .leaderboard-rank-value').text(),
+      rankLogo: $('.rank-tier-base').attr('src'),
+      lastgame: $('.header-content-secondary dl:first-child time').text(),
+      rate: {
+        single: parseInt($('.header-content-secondary dl:nth-child(2)').text()),
+        group: parseInt($('.header-content-secondary dl:nth-child(3)').text())
+      },
+      matches: {
+        wins: $('.game-record .wins').text(),
+        losses: $('.game-record .losses').text(),
+        abandons: $('.game-record .abandons').text(),
+        winRate: $('.header-content-secondary dl:last-of-type dd').text()
+      },
+      lastResults: $('.performances-overview').find('.won, .lost').text().replace(/Поражение/g, '☠️').replace(/Победа/g, '🏆')
+    }
+  }
+})
  
-client.on('presenceUpdate', (old, new_) => {
-    if (new_.presence.game && new_.presence.game.name && new_.presence.game.name in arr) {
-        if (!new_.roles.has(arr[new_.presence.game.name])) {
-            new_.addRole(arr[new_.presence.game.name])
+const colors = ['ff2828','ff3d28','ff4b28','ff5a28','ff6828','ff7628','ff8c28','ffa128','ffac28','ffb728','ffc228','ffd028','ffd728','ffe228','fff028','fffb28','edff28','deff28','d0ff28','c2ff28','b3ff28','9aff28','8cff28','7dff28','6fff28','5aff28','3dff28','28ff2b','28ff41','28ff56','28ff6c','28ff81','28ff93','28ffa9','28ffba','28ffc9','28ffde','28fff4','28ffff','28f0ff','28deff','28deff','28d3ff','28c5ff','28baff','28b0ff','28a5ff','289eff','2893ff','2885ff','2876ff','2864ff','2856ff','284bff','2841ff','2836ff','2828ff','3228ff','4428ff','5328ff','6828ff','7628ff','7e28ff','8828ff','9328ff','a128ff','b028ff','be28ff','c928ff','d328ff','db28ff','e528ff','f028ff','ff28ff','ff28f7','ff28e5','ff28de','ff28d0','ff28c9','ff28ba','ff28b3','ff28a5','ff289a','ff288c','ff2881','ff287a','ff2873','ff2868','ff2861','ff2856','ff284f','ff2848','ff2844','ff282b'];
+const rainbow = () => {
+    colors.forEach((color, num) => {
+        setTimeout(() => {
+            bot.guilds.get('469080709403770883').roles.get('471056516796121088').setColor(color)
+            if(num === colors.length-1) setTimeout(rainbow, 600000)
+        }, num*600000)
+    })
+}
+
+const getTimeNow = () => {
+    const today = new Date(new Date().getTime() + 3*60*60*1000)
+
+    const time = {
+        h: today.getHours(),
+        m: today.getMinutes()
+    }
+
+    const timeChannel = bot.channels.get('474228880027287567')
+    timeChannel.setName(`Время сейчас: ${time.h}:${pad(time.m)} МСК`)
+
+    setTimeout(getTimeNow, 60000)
+}
+ 
+bot.on('ready', rainbow)
+bot.on('ready', getTimeNow)
+
+bot.on('ready', () => {
+    const guild = bot.guilds.get('469080709403770883')
+
+    guild.members.filter(m => m.displayName.startsWith('!')).forEach(member => {
+        const name = member.displayName
+
+        member.setNickname(name.replace(/^!+/gi, ''))
+    })
+})
+
+bot.on('presenceUpdate', (oldMember, newMember) => {
+    const member = newMember
+    const game = member.presence.game.name
+
+    if (game && game in gameRoles) {
+        if (!member.roles.has(gameRoles[game])) {
+            member.addRole(gameRoles[game])
         }
     }
-});
- 
-client.on("ready", () => {
-function clear_nicks(){
-    client.guilds.get('469080709403770883').members.filter(memb => memb.displayName.startsWith('!')).forEach(member => member.setNickname(member.displayName.replace(/^!+/gi, '')).catch())
-}
-clear_nicks();
-setInterval(clear_nicks, 300000);});
- 
-client.on("guildMemberUpdate", (old_memb, new_memb) => {
-    if (new_memb.displayName.startsWith('!')) new_memb.setNickname(new_memb.displayName.replace(/^!+/gi, '')).catch();
-});
- 
-client.on("userUpdate", (old_user, new_user) => {
-    if (client.guilds.get('469080709403770883').members.get(new_user.id).displayName.startsWith('!')) client.guilds.get('469080709403770883').members.get(new_user.id).setNickname(client.guilds.get('469080709403770883').members.get(new_user.id).displayName.replace(/^!+/gi, '')).catch();
-});
- async function multipleReact(message, arr) {
-    if (arr !== []) {
-        await message.react(client.emojis.get(arr.shift())).catch().then(function () {multipleReact(message,arr).catch();});
-    }
-}
-let prefix = '1!';
-client.on("message", async message => {
-    if(message.author.bot) return;
-    if(message.content.indexOf(prefix) !== 0) return;
-    const args = message.content.slice(prefix.length).trim().split(/ +/g);
-    const command = args.shift().toLowerCase();
+})
 
-         if (command === 'd2bf') {
+bot.on('guildMemberUpdate', (oldMember, newMember) => {
+    const member = newMember
+    const name = member.displayName
+
+    if (name.startsWith('!')) {
+        member.setNickname(name.replace(/^!+/gi, ''))
+    }
+})
+
+bot.on('userUpdate', (oldUser, newUser) => {
+    const member = client.guilds.get('469080709403770883').members.get(newUser.id)
+    const name = member.displayName
+    
+    if (name.startsWith('!')) {
+        member.setNickname(name.replace(/^!+/gi, ''))
+    }
+})
+
+bot.on('channelUpdate', (oldChannel, newChannel) => {
+    const limit = 10
+    const channel = newChannel
+
+    if (selfChannels.includes(channel.id)) {
+        if (channel.userLimit === 0 || channel.userLimit > limit) channel.edit({ userLimit: limit }).catch(console.error)
+    }
+})
+
+bot.on('voiceStateUpdate', (oldUser, newUser) => {
+    if (oldUser.user.bot || newUser.user.bot) return
+  
+    const newChannel = newUser.voiceChannel
+    const oldChannel = oldUser.voiceChannel
+
+    if (newChannel) {
+        const channelId = newChannel.id
+
+        if (channelId === '478835433397157898') {
+            const guild = newUser.guild
+
+            guild.createChannel(newUser.displayName, 'voice', [{
+                id: newUser.id,
+                allow: ['MANAGE_CHANNELS']
+            }])
+            .then(channel => {
+                channel.edit({
+                    parent: '478833880875532299',
+                    userLimit: 2
+                })
+
+                newUser.setVoiceChannel(channel.id)
+                selfChannels.push(channel.id)
+            })
+            .catch(console.error)
+        }
+    }
+    
+    if (oldChannel) {
+        const channelId = oldChannel.id
+
+        if (selfChannels.includes(channelId)) {
+            if (oldChannel.members.size === 0) {
+                const guild = oldUser.guild
+                const channel = guild.channels.get(channelId)
+            
+                delete selfChannels[channelId]
+            
+                if (channel.deletable) channel.delete().catch(console.error)
+            }
+        }
+    }
+})
+
+bot.on('message', message => {
+    if(message.author.bot) return
+    if(message.content.indexOf(prefix) !== 0) return
+
+    const args = message.content.slice(prefix.length).trim().split(/ +/g)
+    const command = args.shift().toLowerCase()
+
+    if (command === 'd2bf') {
+        message.delete()
+
         const playerId = args[0]
 
         getD2BuffInfo(playerId).then(profile => {
@@ -114,7 +186,7 @@ client.on("message", async message => {
 
             console.log(profile)
 
-            const response = new Discord.RichEmbed()
+            const response = new RichEmbed()
 
             response.setColor('#009dd0')
               .setTitle(`#${playerId}`)
@@ -139,74 +211,89 @@ client.on("message", async message => {
             return message.channel.send(response)
         })
     }
-  if (command === 'embed' && message.author.id === '462996610146893824') {
+ 
+    if (command === 'embed' && message.author.id === '462996610146893824') {
         try {
-            let text = args.join(" ").replace(/\n/g, "\\n");
-            let embed = new Discord.RichEmbed();
-            let footer = text.match(/{footer:(.*?)( \| icon: ?(.*?))?}/i);
+            let text = args.join(' ').replace(/\n/g, '\\n')
+            let embed = new RichEmbed()
+            let footer = text.match(/{footer:(.*?)( \| icon: ?(.*?))?}/i)
+
             if (footer !== null) {
                 embed.setFooter(footer[1], footer[3])
             }
-            let image = text.match(/{image: ?(.*?)( \| hide)?}/i);
+
+            let image = text.match(/{image: ?(.*?)( \| hide)?}/i)
             if (image !== null) {
                 if (image[2] !== null)
-                embed.attachFile({
-                    attachment: image[1],
-                    file: image[1].substring(image[1].lastIndexOf('/') + 1)
-                }).setImage('attachment://'+image[1].substring(image[1].lastIndexOf('/') + 1));
+                    embed.attachFile({
+                        attachment: image[1],
+                        file: image[1].substring(image[1].lastIndexOf('/') + 1)
+                    }).setImage('attachment://'+image[1].substring(image[1].lastIndexOf('/') + 1))
                 else
-                    embed.setThumbnail(image[1]);
+                    embed.setThumbnail(image[1])
             }
-            let thumb = text.match(/{thumbnail: ?(.*?)( \| hide)?}/i);
+
+            let thumb = text.match(/{thumbnail: ?(.*?)( \| hide)?}/i)
             if (thumb !== null) {
                 if (thumb[2] !== null)
-                embed.attachFile({
-                    attachment: thumb[1],
-                    file: thumb[1].substring(thumb[1].lastIndexOf('/') + 1)
-                }).setThumbnail('attachment://'+thumb[1].substring(thumb[1].lastIndexOf('/') + 1));
+                    embed.attachFile({
+                        attachment: thumb[1],
+                        file: thumb[1].substring(thumb[1].lastIndexOf('/') + 1)
+                    }).setThumbnail('attachment://'+thumb[1].substring(thumb[1].lastIndexOf('/') + 1))
                 else
-                    embed.setThumbnail(thumb[1]);
+                    embed.setThumbnail(thumb[1])
             }
-            let author = text.match(/{author:(.*?)( \| icon: ?(.*?))?( \| url: ?(.*?))?}/i);
+
+            let author = text.match(/{author:(.*?)( \| icon: ?(.*?))?( \| url: ?(.*?))?}/i)
             if (author !== null) {
                 embed.setAuthor(author[1], author[3], author[5])
             }
-            let title = text.match(/{title:(.*?)}/i);
+
+            let title = text.match(/{title:(.*?)}/i)
             if (title !== null) {
                 embed.setTitle(title[1])
             }
-            let url = text.match(/{url: ?(.*?)}/i);
+
+            let url = text.match(/{url: ?(.*?)}/i)
             if (url !== null) {
                 embed.setURL(url[1])
             }
-            let description = text.match(/{description:(.*?)}/i);
+
+            let description = text.match(/{description:(.*?)}/i)
             if (description !== null) {
                 embed.setDescription(description[1].replace(/\\n/g, '\n'))
             }
-            let color = text.match(/{colou?r: ?(.*?)}/i);
+
+            let color = text.match(/{colou?r: ?(.*?)}/i)
             if (color !== null) {
                 embed.setColor(color[1])
             }
-            let timestamp = text.match(/{timestamp(: ?(.*?))?}/i);
+
+            let timestamp = text.match(/{timestamp(: ?(.*?))?}/i)
             if (timestamp !== null) {
                 if (timestamp[2] === undefined || timestamp[2] === null)
-                    embed.setTimestamp(new Date());
+                    embed.setTimestamp(new Date())
                 else
-                    embed.setTimestamp(new Date(timestamp[2]));
+                    embed.setTimestamp(new Date(timestamp[2]))
             }
-            let fields = text.match(/{field: ?(.*?) \| value: ?(.*?)( \| inline)?}/gi);
+
+            let fields = text.match(/{field: ?(.*?) \| value: ?(.*?)( \| inline)?}/gi)
             if (fields !== null) {
-                fields.forEach((item) => {
-                    if (item[1] == null || item[2] == null || typeof item[1] === "undefined" || typeof item[2] === "undefined") return;
-                    let matches = item.match(/{field: ?(.*?) \| value: ?(.*?)( \| inline)?}/i);
+                fields.forEach((field) => {
+                    if (field[1] == null || field[2] == null || typeof field[1] === 'undefined' || typeof field[2] === 'undefined') return
+                    let matches = field.match(/{field: ?(.*?) \| value: ?(.*?)( \| inline)?}/i)
+
                     embed.addField(matches[1], matches[2], (matches[3] != null));
-                });}
-            message.channel.send({embed});
-            message.delete();
+                })
+            }
+
+            message.channel.send({embed})
+            message.delete()
         } catch(e) {
-            message.channel.send('Ошибка').then(msg => msg.delete(3000));
-            console.error(e);
+            message.channel.send('Ошибка').then(msg => msg.delete(3000))
+            console.error(e)
         }
     }
-});
-    
+})
+
+bot.login(process.env.TOKEN).catch(console.error)
