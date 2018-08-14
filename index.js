@@ -88,11 +88,11 @@ bot.on('ready', () => {
 
 bot.on('presenceUpdate', (oldMember, newMember) => {
     const member = newMember
-    const game = member.presence.game.name
+    const game = member.presence.game
 
-    if (game && game in gameRoles) {
-        if (!member.roles.has(gameRoles[game])) {
-            member.addRole(gameRoles[game])
+    if (game && game.name in gameRoles) {
+        if (!member.roles.has(gameRoles[game.name])) {
+            member.addRole(gameRoles[game.name])
         }
     }
 })
